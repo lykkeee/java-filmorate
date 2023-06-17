@@ -7,6 +7,9 @@ public class ValidLoginValidator implements ConstraintValidator<ValidLogin, Stri
 
     @Override
     public boolean isValid(String s, ConstraintValidatorContext constraintValidatorContext) {
-        return !s.contains(" ") && !s.isBlank();
+        if (s != null) {
+            return !s.contains(" ") && !s.isBlank();
+        }
+        return false;
     }
 }
