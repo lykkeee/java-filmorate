@@ -27,7 +27,7 @@ class FilmControllerTest {
 
     @Test
     void createEmptyFilm() {
-        Film film = filmController.createFilm(new Film(null, null, null, null, null));
+        Film film = filmController.createFilm(new Film(null, null, null, null, 0));
         Set<ConstraintViolation<Film>> violations = validator.validate(film);
         assertFalse(violations.isEmpty());
     }

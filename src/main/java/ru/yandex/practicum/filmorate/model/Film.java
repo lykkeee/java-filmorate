@@ -14,11 +14,11 @@ import java.time.LocalDate;
 public class Film {
     private Integer id;
     @NotBlank
-    private final String name;
+    private String name;
     @Size(max = 200)
-    private final String description;
+    private String description;
     @IsAfter("1895-12-28")
-    private final LocalDate releaseDate;
+    private LocalDate releaseDate;
     @Positive
-    private final Integer duration;
+    private long duration;
 }
