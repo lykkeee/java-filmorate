@@ -41,7 +41,7 @@ class UserControllerTest {
 
     @Test
     void createWrongLoginUser() {
-        User user = userController.createUser(new User(0, "email@kl.ee", "log in", "", LocalDate.of(1988, 1, 1)));
+        User user = userController.createUser(new User(0, "email@kl.ee", " ", "", LocalDate.of(1988, 1, 1)));
         Set<ConstraintViolation<User>> violations = validator.validate(user);
         assertFalse(violations.isEmpty());
     }
