@@ -3,6 +3,8 @@ package ru.yandex.practicum.filmorate.controllers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.UserService;
+import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.Validation;
@@ -20,35 +22,35 @@ class UserControllerTest {
 
     @BeforeEach
     public void beforeEach() {
-        userController = new UserController();
+        userController = new UserController(new UserService(new InMemoryUserStorage()));
         ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
         validator = factory.getValidator();
     }
 
     @Test
     void createEmptyUser() {
-        User user = userController.createUser(new User(null, null, null, null, null));
+        User user = userController.createUser(new User(null, null, null, null, null, null));
         Set<ConstraintViolation<User>> violations = validator.validate(user);
         assertFalse(violations.isEmpty());
     }
 
     @Test
     void createWrongEmailUser() {
-        User user = userController.createUser(new User(0, "wrongEmail", "login", "", LocalDate.of(1988, 1, 1)));
+        User user = userController.createUser(new User(0, "wrongEmail", "login", "", LocalDate.of(1988, 1, 1), null));
         Set<ConstraintViolation<User>> violations = validator.validate(user);
         assertFalse(violations.isEmpty());
     }
 
     @Test
     void createWrongLoginUser() {
-        User user = userController.createUser(new User(0, "email@kl.ee", " ", "", LocalDate.of(1988, 1, 1)));
+        User user = userController.createUser(new User(0, "email@kl.ee", " ", "", LocalDate.of(1988, 1, 1), null));
         Set<ConstraintViolation<User>> violations = validator.validate(user);
         assertFalse(violations.isEmpty());
     }
 
     @Test
     void createWrongDateUser() {
-        User user = userController.createUser(new User(0, "email@kl.ee", "login", "", LocalDate.of(2025, 1, 1)));
+        User user = userController.createUser(new User(0, "email@kl.ee", "login", "", LocalDate.of(2025, 1, 1), null));
         Set<ConstraintViolation<User>> violations = validator.validate(user);
         assertFalse(violations.isEmpty());
     }

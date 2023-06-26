@@ -1,49 +1,73 @@
 package ru.yandex.practicum.filmorate.controllers;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.AllArgsConstructor;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.exceptions.NotFoundException;
 import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.service.FilmService;
 
 import javax.validation.Valid;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/films")
+@AllArgsConstructor
 public class FilmController {
-    private final Map<Integer, Film> films = new HashMap<>();
-    private int generatedId = 0;
-    private static final Logger log = LoggerFactory.getLogger(FilmController.class);
+
+    private final FilmService filmService;
 
     @PostMapping
     public Film createFilm(@RequestBody @Valid Film film) {
-        log.info("Запрос на добавление нового фильма:{}", film);
-        film.setId(++generatedId);
-        films.put(film.getId(), film);
-        log.info("Добавление нового фильма:{}", film);
-        return film;
+        return filmService.createFilm(film);
     }
 
     @PutMapping
     public Film updateFilm(@RequestBody @Valid Film film) {
-        log.info("Запрос на обновление фильма:{}", film);
-        if (!films.containsKey(film.getId())) {
-            log.error("Переданный id фильма не найден:" + film.getId());
-            throw new ValidationException("Фильм с id = " + film.getId() + " не найден");
-        }
-        films.put(film.getId(), film);
-        log.info("Обновление фильма:{}", film);
-        return film;
+        return filmService.updateFilm(film);
     }
 
     @GetMapping
     public List<Film> getAllFilms() {
-        log.info("Получение списка всех фильмов");
-        return new ArrayList<>(films.values());
+        return filmService.getAllFilms();
     }
 
+    @DeleteMapping("/{id}")
+    public void deleteFilm(@PathVariable("id") int filmId) {
+        filmService.deleteFilm(filmId);
+    }
+
+    @GetMapping("/{id}")
+    public Film getFilm(@PathVariable("id") int filmId) {
+        return filmService.getFilm(filmId);
+    }
+
+    @PutMapping("/{id}/like/{userId}")
+    public void addLike(@PathVariable("id") int filmId, @PathVariable int userId) {
+        filmService.addLike(userId, filmId);
+    }
+
+    @DeleteMapping("/{id}/like/{userId}")
+    public void deleteLike(@PathVariable("id") int filmId, @PathVariable int userId) {
+        filmService.deleteLike(userId, filmId);
+    }
+
+    @GetMapping("/popular")
+    public List<Film> getTopFilms(@RequestParam(required = false) Integer count) {
+        return filmService.getTopFilms(count);
+    }
+
+    @ResponseStatus(
+            value = HttpStatus.NOT_FOUND,
+            reason = "Переданный id фильма не найден")
+    @ExceptionHandler(NotFoundException.class)
+    public void handleNotFoundException(NotFoundException e) {
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(ValidationException.class)
+    public void handleValidationException(ValidationException e) {
+    }
 }
