@@ -1,6 +1,5 @@
 package ru.yandex.practicum.filmorate.storage.film;
 
-import lombok.Getter;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.model.Film;
 
@@ -11,7 +10,7 @@ import java.util.Map;
 
 @Component
 public class InMemoryFilmStorage implements FilmStorage {
-    @Getter
+
     private final Map<Integer, Film> films = new HashMap<>();
     private int generatedId = 0;
 
@@ -36,5 +35,9 @@ public class InMemoryFilmStorage implements FilmStorage {
     @Override
     public void deleteFilm(int filmId) {
         films.remove(filmId);
+    }
+
+    public Film getFilm(Integer filmId) {
+        return films.get(filmId);
     }
 }

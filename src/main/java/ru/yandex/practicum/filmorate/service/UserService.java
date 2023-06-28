@@ -5,9 +5,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.controllers.UserController;
-import ru.yandex.practicum.filmorate.exceptions.NotFoundException;
+import ru.yandex.practicum.filmorate.exceptions.DataNotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.user.UserStorage;
+import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -17,128 +17,106 @@ import java.util.List;
 @AllArgsConstructor
 public class UserService {
     private static final Logger log = LoggerFactory.getLogger(UserController.class);
-    public final UserStorage userStorage;
+    public final InMemoryUserStorage inMemoryUserStorage;
 
     public User createUser(User user) {
-        log.info("Запрос на добавление нового пользователя:{}", user);
-        user.nameValidator(user.getName());
-        log.info("Добавление нового пользователя:{}", user);
-        return userStorage.createUser(user);
+        nameValidator(user);
+        return inMemoryUserStorage.createUser(user);
     }
 
     public User updateUser(User user) {
-        log.info("Запрос на обновление пользователя:{}", user);
-        if (!userStorage.getUsers().containsKey(user.getId())) {
+        if (inMemoryUserStorage.getUser(user.getId()) == null) {
             log.error("Переданный id пользователя не найден:" + user.getId());
-            throw new NotFoundException("Пользователь с id = " + user.getId() + " не найден");
+            throw new DataNotFoundException("Пользователь с id = " + user.getId() + " не найден");
         }
-        user.nameValidator(user.getName());
-        return userStorage.updateUser(user);
+        nameValidator(user);
+        return inMemoryUserStorage.updateUser(user);
     }
 
     public List<User> getAllUsers() {
-        log.info("Получение списка всех пользователей");
-        return userStorage.getAllUsers();
+        return inMemoryUserStorage.getAllUsers();
     }
 
     public void deleteUser(int userId) {
-        log.info("Запрос на удаление пользователя с id:{}", userId);
-        if (!userStorage.getUsers().containsKey(userId)) {
+        if (inMemoryUserStorage.getUser(userId) == null) {
             log.error("Переданный id пользователя не найден:" + userId);
-            throw new NotFoundException("Пользователь с id = " + userId + " не найден");
+            throw new DataNotFoundException("Пользователь с id = " + userId + " не найден");
         }
-        userStorage.deleteUser(userId);
-        log.info("Пользователь удален:{}", userStorage.getUsers().get(userId));
+        inMemoryUserStorage.getUser(userId);
     }
 
     public User getUser(int userId) {
-        log.info("Запрос на получение пользователя с id:{}", userId);
-        if (!userStorage.getUsers().containsKey(userId)) {
+        if (inMemoryUserStorage.getUser(userId) == null) {
             log.error("Переданный id пользователя не найден:" + userId);
-            throw new NotFoundException("Пользователь с id = " + userId + " не найден");
+            throw new DataNotFoundException("Пользователь с id = " + userId + " не найден");
         }
-        log.info("Пользователь получен:{}", userStorage.getUsers().get(userId));
-        return userStorage.getUsers().get(userId);
+        return inMemoryUserStorage.getUser(userId);
     }
 
     public void addFriend(Integer userId1, Integer userId2) {
-        log.info("Запрос на добавление пользователя с id " + userId1 + " в друзья к пользователю с id "
-                + userId2);
-        if (!userStorage.getUsers().containsKey(userId1)) {
-            log.error("Переданный id пользователя не найден:" + userId1);
-            throw new NotFoundException("Пользователь с id = " + userId1 + " не найден");
+        checkUsersExistence(userId1, userId2);
+        if (inMemoryUserStorage.getUser(userId1).getFriendsList() == null) {
+            inMemoryUserStorage.getUser(userId1).setFriendsList(new HashSet<>());
         }
-        if (!userStorage.getUsers().containsKey(userId2)) {
-            log.error("Переданный id пользователя не найден:" + userId2);
-            throw new NotFoundException("Пользователь с id = " + userId2 + " не найден");
+        if (inMemoryUserStorage.getUser(userId2).getFriendsList() == null) {
+            inMemoryUserStorage.getUser(userId2).setFriendsList(new HashSet<>());
         }
-        if (userStorage.getUsers().get(userId1).getFriendsList() == null) {
-            userStorage.getUsers().get(userId1).setFriendsList(new HashSet<>());
-        }
-        if (userStorage.getUsers().get(userId2).getFriendsList() == null) {
-            userStorage.getUsers().get(userId2).setFriendsList(new HashSet<>());
-        }
-        userStorage.getUsers().get(userId1).getFriendsList().add(Long.valueOf(userId2));
-        userStorage.getUsers().get(userId2).getFriendsList().add(Long.valueOf(userId1));
-        log.info("Пользователь с id " + userId1 + " добавлен в друзья к пользователю с id "
-                + userId2);
+        inMemoryUserStorage.getUser(userId1).getFriendsList().add(Long.valueOf(userId2));
+        inMemoryUserStorage.getUser(userId2).getFriendsList().add(Long.valueOf(userId1));
     }
 
     public void deleteFriend(Integer userId1, Integer userId2) {
-        log.info("Запрос на удаление пользователя с id " + userId1 + " из друзей пользователя с id "
-                + userId2);
-        if (!userStorage.getUsers().containsKey(userId1)) {
-            log.error("Переданный id пользователя не найден:" + userId1);
-            throw new NotFoundException("Пользователь с id = " + userId1 + " не найден");
-        }
-        if (!userStorage.getUsers().containsKey(userId2)) {
-            log.error("Переданный id пользователя не найден:" + userId2);
-            throw new NotFoundException("Пользователь с id = " + userId2 + " не найден");
-        }
-        if (userStorage.getUsers().get(userId1).getFriendsList() == null) {
+        checkUsersExistence(userId1, userId2);
+        if (inMemoryUserStorage.getUser(userId1).getFriendsList() == null) {
             log.error("У пользователя с id " + userId1 + " список друзей пуст");
-            throw new NotFoundException("У пользователя с id " + userId2 + " список друзей пуст");
+            throw new DataNotFoundException("У пользователя с id " + userId2 + " список друзей пуст");
         }
-        if (userStorage.getUsers().get(userId2).getFriendsList() == null) {
+        if (inMemoryUserStorage.getUser(userId2).getFriendsList() == null) {
             log.error("У пользователя с id " + userId2 + " список друзей пуст");
-            throw new NotFoundException("У пользователя с id " + userId2 + " список друзей пуст");
+            throw new DataNotFoundException("У пользователя с id " + userId2 + " список друзей пуст");
         }
-        userStorage.getUsers().get(userId1).getFriendsList().remove(Long.valueOf(userId2));
-        userStorage.getUsers().get(userId2).getFriendsList().remove(Long.valueOf(userId1));
-        log.info("Пользователь с id " + userId1 + " удалён из друзей пользователя с id "
-                + userId2);
+        inMemoryUserStorage.getUser(userId1).getFriendsList().remove(Long.valueOf(userId2));
+        inMemoryUserStorage.getUser(userId2).getFriendsList().remove(Long.valueOf(userId1));
     }
 
     public List<User> getFriends(Integer userId) {
         List<User> friends = new ArrayList<>();
-        log.info("Запрос на получение списка друзей пользователя с id:{}", userId);
-        if (!userStorage.getUsers().containsKey(userId)) {
+        if (inMemoryUserStorage.getUser(userId) == null) {
             log.error("Переданный id пользователя не найден:" + userId);
-            throw new NotFoundException("Пользователь с id = " + userId + " не найден");
+            throw new DataNotFoundException("Пользователь с id = " + userId + " не найден");
         }
-        if (userStorage.getUsers().get(userId).getFriendsList() == null) {
-            userStorage.getUsers().get(userId).setFriendsList(new HashSet<>());
+        if (inMemoryUserStorage.getUser(userId).getFriendsList() == null) {
+            inMemoryUserStorage.getUser(userId).setFriendsList(new HashSet<>());
         }
-        for (Long userFriend : userStorage.getUsers().get(userId).getFriendsList()) {
-            friends.add(userStorage.getUsers().get(userFriend.intValue()));
+        for (Long userFriend : inMemoryUserStorage.getUser(userId).getFriendsList()) {
+            friends.add(inMemoryUserStorage.getUser((userFriend.intValue())));
         }
         return friends;
     }
 
     public List<User> getCommonFriends(Integer userId1, Integer userId2) {
-        log.info("Запрос на получение списка общих друзей пользователя с id " + userId1 + " и пользователя с id "
-                + userId2);
-        if (!userStorage.getUsers().containsKey(userId1)) {
-            log.error("Переданный id пользователя не найден:" + userId1);
-            throw new NotFoundException("Пользователь с id = " + userId1 + " не найден");
-        }
-        if (!userStorage.getUsers().containsKey(userId2)) {
-            log.error("Переданный id пользователя не найден:" + userId2);
-            throw new NotFoundException("Пользователь с id = " + userId2 + " не найден");
-        }
+        checkUsersExistence(userId1, userId2);
         List<User> commonFriends = getFriends(userId1);
         commonFriends.retainAll(getFriends(userId2));
         return commonFriends;
+    }
+
+    private void nameValidator(User user) {
+        if (user.getName() == null || user.getName().isBlank()) {
+            user.setName(user.getLogin());
+            log.info("Имя пользователя не было указано, подставлен логин:{}", user.getName());
+        }
+    }
+
+    private void checkUsersExistence(Integer userId1, Integer userId2) {
+        if (inMemoryUserStorage.getUser(userId1) == null) {
+            log.error("Переданный id пользователя не найден:" + userId1);
+            throw new DataNotFoundException("Пользователь с id = " + userId1 + " не найден");
+        }
+        if (inMemoryUserStorage.getUser(userId2) == null) {
+            log.error("Переданный id пользователя не найден:" + userId2);
+            throw new DataNotFoundException("Пользователь с id = " + userId2 + " не найден");
+        }
     }
 
 }

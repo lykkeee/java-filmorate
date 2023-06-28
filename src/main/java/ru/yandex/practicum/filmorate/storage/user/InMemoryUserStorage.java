@@ -1,6 +1,5 @@
 package ru.yandex.practicum.filmorate.storage.user;
 
-import lombok.Getter;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.model.User;
 
@@ -11,14 +10,13 @@ import java.util.Map;
 
 @Component
 public class InMemoryUserStorage implements UserStorage {
-    @Getter
+
     private final Map<Integer, User> users = new HashMap<>();
     private int generatedId = 0;
 
     @Override
     public User createUser(User user) {
         user.setId(++generatedId);
-        user.nameValidator(user.getName());
         users.put(user.getId(), user);
         return user;
     }
@@ -37,5 +35,9 @@ public class InMemoryUserStorage implements UserStorage {
     @Override
     public void deleteUser(int userId) {
         users.remove(userId);
+    }
+
+    public User getUser(Integer userId) {
+        return users.get(userId);
     }
 }

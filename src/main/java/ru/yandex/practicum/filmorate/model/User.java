@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import net.minidev.json.annotate.JsonIgnore;
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
@@ -20,13 +21,6 @@ public class User {
     private String name;
     @PastOrPresent
     private LocalDate birthday;
+    @JsonIgnore
     private Set<Long> friendsList;
-
-    public void nameValidator(String name) {
-        if (name == null || name.isBlank()) {
-            this.name = login;
-        } else {
-            this.name = name;
-        }
-    }
 }
