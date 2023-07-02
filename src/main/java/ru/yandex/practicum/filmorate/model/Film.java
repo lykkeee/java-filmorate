@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import ru.yandex.practicum.filmorate.annotations.IsAfter;
@@ -8,6 +9,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.Size;
 import java.time.LocalDate;
+import java.util.Set;
 
 @Data
 @AllArgsConstructor
@@ -21,4 +23,13 @@ public class Film {
     private LocalDate releaseDate;
     @Positive
     private long duration;
+    @JsonIgnore
+    private Set<Long> likesList;
+
+    public int getLikesListSize() {
+        if (likesList == null) {
+            return 0;
+        }
+        return likesList.size();
+    }
 }
