@@ -43,7 +43,7 @@ public class UserServiceTest {
     public void testUpdateUser() {
         userService.createUser(user);
         User user1 = userService.getUser(1);
-        userService.updateUser( new User(1, "po@dkl.er", "login", "", LocalDate.of(1990, 1, 1)));
+        userService.updateUser(new User(1, "po@dkl.er", "login", "", LocalDate.of(1990, 1, 1)));
         assertNotEquals(user1, userService.getUser(1));
     }
 
