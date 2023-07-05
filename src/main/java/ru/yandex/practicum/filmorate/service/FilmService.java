@@ -63,7 +63,9 @@ public class FilmService {
         }
         Film film = filmDbStorage.getFilm(filmId);
         film.setMpa(mpaDbStorage.getMpa(film.getMpa().getId()));
-        film.setGenres(new HashSet<>(filmGenreDbStorage.getGenresByFilmId(film.getId())));
+        List<Genre> genres = new ArrayList<>(filmGenreDbStorage.getGenresByFilmId(film.getId()));
+        genres.sort(Comparator.comparingInt(Genre::getId));
+        film.setGenres(new HashSet<>(genres));
         return film;
     }
 
@@ -134,7 +136,9 @@ public class FilmService {
                 filmGenreDbStorage.addGenreToFilm(film1.getId(), genre.getId());
             }
         }
-        film1.setGenres(new HashSet<>(filmGenreDbStorage.getGenresByFilmId(film1.getId())));
+        List<Genre> genres = new ArrayList<>(filmGenreDbStorage.getGenresByFilmId(film1.getId()));
+        genres.sort(Comparator.comparingInt(Genre::getId));
+        film1.setGenres(new HashSet<>(genres));
         return film1;
     }
 }
