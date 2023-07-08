@@ -21,8 +21,6 @@ public class User {
     @NotBlank
     private String login;
     private String name;
-    @JsonIgnore
-    private String userName;
     @PastOrPresent
     private LocalDate birthday;
     @JsonIgnore

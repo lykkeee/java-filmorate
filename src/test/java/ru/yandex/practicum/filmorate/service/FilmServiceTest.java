@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class FilmServiceTest {
     private final FilmService filmService;
 
-    private final Film film = new Film(null, "name", "description", LocalDate.of(1990, 1, 1), 120L, new Mpa(1), null);
+    private final Film film = new Film(null, "name", "description", LocalDate.of(1990, 1, 1), 120L, new Mpa(1));
 
 
     @Test
@@ -46,7 +46,7 @@ public class FilmServiceTest {
     public void testUpdateFilm() {
         filmService.createFilm(film);
         Film film1 = filmService.getFilm(1);
-        filmService.updateFilm(new Film(1, "name_updated", "description", LocalDate.of(1990, 1, 1), 120L, new Mpa(1), null));
+        filmService.updateFilm(new Film(1, "name_updated", "description", LocalDate.of(1990, 1, 1), 120L, new Mpa(1)));
         assertNotEquals(film1, filmService.getFilm(1));
     }
 

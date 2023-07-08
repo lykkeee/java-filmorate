@@ -11,7 +11,7 @@ import javax.validation.constraints.Positive;
 import javax.validation.constraints.Size;
 import java.time.LocalDate;
 
-import java.util.Set;
+import java.util.*;
 
 @Data
 @AllArgsConstructor
@@ -20,8 +20,6 @@ public class Film {
     private Integer id;
     @NotBlank
     private String name;
-    @JsonIgnore
-    private String filmName;
     @Size(max = 200)
     private String description;
     @IsAfter("1895-12-28")
@@ -31,18 +29,16 @@ public class Film {
     @JsonIgnore
     private Set<Long> likesList;
     private Mpa mpa;
-    @JsonIgnore
-    private int mpaId;
     private Set<Genre> genres;
 
-    public Film(Integer id, String name, String description, LocalDate releaseDate, long duration, Mpa mpa, Set<Genre> genres) {
+    public Film(Integer id, String name, String description, LocalDate releaseDate, long duration, Mpa mpa) {
         this.id = id;
         this.name = name;
         this.description = description;
         this.releaseDate = releaseDate;
         this.duration = duration;
         this.mpa = mpa;
-        this.genres = genres;
+        genres = new HashSet<>();
     }
 
     @JsonIgnore
@@ -51,5 +47,13 @@ public class Film {
             return 0;
         }
         return likesList.size();
+    }
+
+    @JsonIgnore
+    public void addGenre(Genre genre) {
+        genres.add(genre);
+        List<Genre> sortedList = new ArrayList<>(genres);
+        sortedList.sort(Comparator.comparing(Genre::getId));
+        genres = new HashSet<>(sortedList);
     }
 }

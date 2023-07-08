@@ -21,7 +21,7 @@ public class MpaDbStorage {
     }
 
     public Mpa getMpa(int mpaId) {
-        List<Mpa> mpas = jdbcTemplate.query("select * from film_mpa where mpa_id = ?", mpaRowMapper(), mpaId);
+        List<Mpa> mpas = jdbcTemplate.query("select * from film_mpa where id = ?", mpaRowMapper(), mpaId);
         if (mpas.size() != 1) {
             throw new DataNotFoundException("Рейтинг с таким id не найден: " + mpaId);
         }
@@ -30,8 +30,8 @@ public class MpaDbStorage {
 
     private RowMapper<Mpa> mpaRowMapper() {
         return (rs, rowNum) -> new Mpa(
-                rs.getInt("mpa_id"),
-                rs.getString("mpa_name")
+                rs.getInt("id"),
+                rs.getString("name")
         );
     }
 }

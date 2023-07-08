@@ -21,7 +21,6 @@ public class UserService {
 
     public User createUser(User user) {
         nameValidator(user);
-        user.setUserName(user.getName());
         return userDbStorage.createUser(user);
     }
 
@@ -31,8 +30,7 @@ public class UserService {
             throw new DataNotFoundException("Пользователь с id = " + user.getId() + " не найден");
         }
         nameValidator(user);
-        user.setUserName(user.getName());
-        return  userDbStorage.updateUser(user);
+        return userDbStorage.updateUser(user);
     }
 
     public List<User> getAllUsers() {

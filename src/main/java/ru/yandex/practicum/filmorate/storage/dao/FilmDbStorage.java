@@ -12,7 +12,6 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
-import java.util.HashSet;
 import java.util.List;
 
 @Component
@@ -24,17 +23,18 @@ public class FilmDbStorage implements FilmStorage {
     public Film createFilm(Film film) {
         SimpleJdbcInsert simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate)
                 .withTableName("films")
-                .usingGeneratedKeyColumns("film_id");
+                .usingGeneratedKeyColumns("id");
 
         SqlParameterSource parameterSource = new BeanPropertySqlParameterSource(film);
         film.setId((Integer) simpleJdbcInsert.executeAndReturnKey(parameterSource));
+        jdbcTemplate.update("update films set mpa_id = ? where id = ?", film.getMpa().getId(), film.getId());
         return film;
     }
 
     @Override
     public Film updateFilm(Film film) {
-        jdbcTemplate.update("update films set film_name = ?, description = ?, release_date = ?, duration = ?, " +
-                        "mpa_id = ? where film_id = ?",
+        jdbcTemplate.update("update films set name = ?, description = ?, release_date = ?, duration = ?, " +
+                        "mpa_id = ? where id = ?",
                 film.getName(),
                 film.getDescription(),
                 film.getReleaseDate(),
@@ -47,20 +47,20 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public List<Film> getAllFilms() {
-        return jdbcTemplate.query("select f.film_id, f.film_name, f.description, f.release_date, " +
-                "f.duration, f.mpa_id, m.mpa_name from films f join film_mpa m on f.mpa_id=m.mpa_id " +
-                "order by f.film_id", filmRowMapper());
+        return jdbcTemplate.query("select f.id, f.name, f.description, f.release_date, " +
+                "f.duration, f.mpa_id, m.name from films f join film_mpa m on f.mpa_id=m.id " +
+                "order by f.id", filmRowMapper());
     }
 
     @Override
     public void deleteFilm(int filmId) {
-        jdbcTemplate.update("delete from films where film_id = ?", filmId);
+        jdbcTemplate.update("delete from films where id = ?", filmId);
     }
 
     public Film getFilm(int filmId) {
-        List<Film> films = jdbcTemplate.query("select f.film_id, f.film_name, f.description, f.release_date, " +
-                "f.duration, f.mpa_id, m.mpa_name from films f left join film_mpa m on f.mpa_id=m.mpa_id " +
-                "where film_id = ?", filmRowMapper(), filmId);
+        List<Film> films = jdbcTemplate.query("select f.id, f.name, f.description, f.release_date, " +
+                "f.duration, f.mpa_id, m.name from films f left join film_mpa m on f.mpa_id=m.id " +
+                "where f.id = ?", filmRowMapper(), filmId);
         if (films.size() != 1) {
             throw new DataNotFoundException("Фильм с таким id не найден: " + filmId);
         }
@@ -82,13 +82,12 @@ public class FilmDbStorage implements FilmStorage {
 
     private RowMapper<Film> filmRowMapper() {
         return (rs, rowNum) -> new Film(
-                rs.getInt("film_id"),
-                rs.getString("film_name"),
+                rs.getInt("id"),
+                rs.getString("name"),
                 rs.getString("description"),
                 rs.getDate("release_date").toLocalDate(),
                 rs.getLong("duration"),
-                new Mpa(rs.getInt("mpa_id")),
-                new HashSet<>()
+                new Mpa(rs.getInt("mpa_id"), rs.getString("film_mpa.name"))
         );
     }
 }

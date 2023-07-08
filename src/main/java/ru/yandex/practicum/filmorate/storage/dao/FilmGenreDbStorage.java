@@ -17,7 +17,7 @@ public class FilmGenreDbStorage {
     }
 
     public List<Genre> getGenresByFilmId(int filmId) {
-        return jdbcTemplate.query("select * from film_genre fg join genre g on g.genre_id = fg.genre_id where film_id = ?", genreRowMapper(), filmId);
+        return jdbcTemplate.query("select * from film_genre fg join genre g on g.id = fg.genre_id where film_id = ?", genreRowMapper(), filmId);
     }
 
     public void addGenreToFilm(int filmId, int genreId) {
@@ -30,8 +30,8 @@ public class FilmGenreDbStorage {
 
     private RowMapper<Genre> genreRowMapper() {
         return (rs, rowNum) -> new Genre(
-                rs.getInt("genre_id"),
-                rs.getString("genre_name")
+                rs.getInt("id"),
+                rs.getString("name")
         );
     }
 }

@@ -8,10 +8,7 @@ import ru.yandex.practicum.filmorate.controllers.UserController;
 import ru.yandex.practicum.filmorate.exceptions.DataNotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.storage.dao.FilmDbStorage;
-import ru.yandex.practicum.filmorate.storage.dao.FilmGenreDbStorage;
-import ru.yandex.practicum.filmorate.storage.dao.MpaDbStorage;
-import ru.yandex.practicum.filmorate.storage.dao.UserDbStorage;
+import ru.yandex.practicum.filmorate.storage.dao.*;
 
 import java.util.*;
 
@@ -23,6 +20,7 @@ public class FilmService {
     public final UserDbStorage userDbStorage;
     public final FilmGenreDbStorage filmGenreDbStorage;
     public final MpaDbStorage mpaDbStorage;
+    public final GenreDbStorage genreDbStorage;
 
     public Film createFilm(Film film) {
         return setForFilm(film);
@@ -37,14 +35,8 @@ public class FilmService {
     }
 
     public List<Film> getAllFilms() {
-        List<Film> films = new ArrayList<>();
-        if (filmDbStorage.getAllFilms() != null) {
-            for (Film film : filmDbStorage.getAllFilms()) {
-                film.setMpa(mpaDbStorage.getMpa(film.getMpa().getId()));
-                film.setGenres(new HashSet<>(filmGenreDbStorage.getGenresByFilmId(film.getId())));
-                films.add(film);
-            }
-        }
+        List<Film> films = filmDbStorage.getAllFilms();
+        genreDbStorage.load(films);
         return films;
     }
 
@@ -62,10 +54,7 @@ public class FilmService {
             throw new DataNotFoundException("Фильм с id = " + filmId + " не найден");
         }
         Film film = filmDbStorage.getFilm(filmId);
-        film.setMpa(mpaDbStorage.getMpa(film.getMpa().getId()));
-        List<Genre> genres = new ArrayList<>(filmGenreDbStorage.getGenresByFilmId(film.getId()));
-        genres.sort(Comparator.comparingInt(Genre::getId));
-        film.setGenres(new HashSet<>(genres));
+        genreDbStorage.load(Collections.singletonList(film));
         return film;
     }
 
@@ -92,19 +81,16 @@ public class FilmService {
             film.setLikesList(new HashSet<>(filmDbStorage.getLikesByFilm(film.getId())));
             if (topFilms.size() < count1) {
                 topFilms.add(film);
-                film.setMpa(mpaDbStorage.getMpa(film.getMpa().getId()));
-                film.setGenres(new HashSet<>(filmGenreDbStorage.getGenresByFilmId(film.getId())));
                 topFilms.sort(Comparator.comparingInt(Film::getLikesListSize).reversed());
             } else {
                 likes = topFilms.get(topFilms.size() - 1).getLikesListSize();
                 if (film.getLikesListSize() > likes) {
                     topFilms.remove(topFilms.size() - 1);
                     topFilms.add(film);
-                    film.setMpa(mpaDbStorage.getMpa(film.getMpa().getId()));
-                    film.setGenres(new HashSet<>(filmGenreDbStorage.getGenresByFilmId(film.getId())));
                 }
             }
         }
+        genreDbStorage.load(topFilms);
         return topFilms;
     }
 
@@ -120,25 +106,24 @@ public class FilmService {
     }
 
     private Film setForFilm(Film film) {
-        film.setFilmName(film.getName());
-        film.setMpaId(film.getMpa().getId());
         Film film1 = film;
+        film.setMpa(mpaDbStorage.getMpa(film1.getMpa().getId()));
         if (film1.getId() == null) {
-            film1 = filmDbStorage.createFilm(film);
+            film = filmDbStorage.createFilm(film);
         } else {
-            film1 = filmDbStorage.updateFilm(film);
+            film = filmDbStorage.updateFilm(film);
         }
-        if (filmGenreDbStorage.getGenresByFilmId(film.getId()) !=  null) {
-            filmGenreDbStorage.deleteGeneresFromFilm(film1.getId());
+        if (filmGenreDbStorage.getGenresByFilmId(film.getId()) != null) {
+            filmGenreDbStorage.deleteGeneresFromFilm(film.getId());
         }
         if (film.getGenres() != null) {
             for (Genre genre : film.getGenres()) {
-                filmGenreDbStorage.addGenreToFilm(film1.getId(), genre.getId());
+                filmGenreDbStorage.addGenreToFilm(film.getId(), genre.getId());
             }
         }
-        List<Genre> genres = new ArrayList<>(filmGenreDbStorage.getGenresByFilmId(film1.getId()));
+        List<Genre> genres = new ArrayList<>(filmGenreDbStorage.getGenresByFilmId(film.getId()));
         genres.sort(Comparator.comparingInt(Genre::getId));
-        film1.setGenres(new HashSet<>(genres));
-        return film1;
+        film.setGenres(new HashSet<>(genres));
+        return film;
     }
 }

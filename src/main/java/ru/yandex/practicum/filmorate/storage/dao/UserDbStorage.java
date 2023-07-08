@@ -24,7 +24,7 @@ public class UserDbStorage implements UserStorage {
     public User createUser(User user) {
         SimpleJdbcInsert simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate)
                 .withTableName("users")
-                .usingGeneratedKeyColumns("user_id");
+                .usingGeneratedKeyColumns("id");
 
         SqlParameterSource parameterSource = new BeanPropertySqlParameterSource(user);
         user.setId((Integer) simpleJdbcInsert.executeAndReturnKey(parameterSource));
@@ -33,7 +33,7 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public User updateUser(User user) {
-        jdbcTemplate.update("update users set email = ?, user_name = ?, login = ?, birthday = ? where user_id = ?",
+        jdbcTemplate.update("update users set email = ?, name = ?, login = ?, birthday = ? where id = ?",
                 user.getEmail(),
                 user.getName(),
                 user.getLogin(),
@@ -50,11 +50,11 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public void deleteUser(int userId) {
-        jdbcTemplate.update("delete from users where user_id = ?", userId);
+        jdbcTemplate.update("delete from users where id = ?", userId);
     }
 
     public User getUser(int userId) {
-        List<User> users = jdbcTemplate.query("select * from users where user_id = ?", userRowMapper(), userId);
+        List<User> users = jdbcTemplate.query("select * from users where id = ?", userRowMapper(), userId);
         if (users.size() != 1) {
             throw new DataNotFoundException("Пользователь с таким id не найден: " + userId);
         }
@@ -70,22 +70,22 @@ public class UserDbStorage implements UserStorage {
     }
 
     public List<User> getFriends(Integer userId) {
-        return jdbcTemplate.query("select * from users where user_id in (select friend_id from friends " +
+        return jdbcTemplate.query("select * from users where id in (select friend_id from friends " +
                 "where user_id = ?)", userRowMapper(), userId);
     }
 
     public List<User> getCommonFriends(Integer userId, Integer userId2) {
-        return jdbcTemplate.query("select * from users where user_id in (select friend_id from friends " +
-                "where user_id = ?) and user_id in (select friend_id from friends " +
+        return jdbcTemplate.query("select * from users where id in (select friend_id from friends " +
+                "where user_id = ?) and id in (select friend_id from friends " +
                 "where user_id = ?)", userRowMapper(), userId, userId2);
     }
 
     private RowMapper<User> userRowMapper() {
         return (rs, rowNum) -> new User(
-                rs.getInt("user_id"),
+                rs.getInt("id"),
                 rs.getString("email"),
                 rs.getString("login"),
-                rs.getString("user_name"),
+                rs.getString("name"),
                 rs.getDate("birthday").toLocalDate()
         );
     }
